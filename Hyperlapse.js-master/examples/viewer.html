@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html> 
-<head> 
-	<meta http-equiv="content-type" content="text/html; charset=UTF-8"/> 
-	<title>Viewer Example</title> 
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+	<title>Viewer Example</title>
 
-	<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false" type="text/javascript"></script> 
+	<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false" type="text/javascript"></script>
 	<script src="js/dat.gui.min.js"></script>
 	<script src="js/three.min.js"></script>
 	<script src="js/GSVPano.js"></script>
 	<script src="../src/Hyperlapse.js"></script>
-	<script> 
-	
-		var start_point = new google.maps.LatLng(44.3431,6.783936);
-		var end_point = new google.maps.LatLng(44.340578,6.782684);
-		var lookat_point = new google.maps.LatLng(44.34232747290594, 6.786460550292986);
+	<script>
+
+		var start_point = new google.maps.LatLng(1.3499800000000002, 103.68092999999999);
+		var end_point = new google.maps.LatLng(1.33755, 103.69686000000002);
+		var lookat_point = new google.maps.LatLng(1.3431824453335746, 103.69153617919926);
 		var map, directions_renderer, directions_service, streetview_service, geocoder;
 		var start_pin, end_pin, pivot_pin, camera_pin;
 		var _elevation = 0;
@@ -31,7 +31,7 @@
 				lookat_point = new google.maps.LatLng(parts[2], parts[3]);
 				end_point = new google.maps.LatLng(parts[4], parts[5]);
 				_elevation = parts[6] || 0;
-			} 
+			}
 
 			/* Map */
 
@@ -50,7 +50,7 @@
 					+ _elevation;
 			}
 
-			var mapOpt = { 
+			var mapOpt = {
 				mapTypeId: google.maps.MapTypeId.ROADMAP,
 				center: start_point,
 				zoom: 15
@@ -122,12 +122,35 @@
 				});
 			}
 
-			var search = document.getElementById( 'searchButton' );
-			search.addEventListener( 'click', function( event ) {
-				event.preventDefault();
-				findAddress( document.getElementById("address").value );
-			}, false );
+			// var search = document.getElementById( 'searchButton' );
+			// search.addEventListener( 'click', function( event ) {
+			// 	event.preventDefault();
+			// 	findAddress( document.getElementById("address").value );
+			// }, false );
 
+			// var play = document.getElementById( 'playButton');
+			// play.addEventListener( 'click', function( event ) {
+			// 	event.preventDefault();
+			// 	hyperlapse.play();
+			// }, false );
+			//
+			// var pause = document.getElementById( 'pauseButton');
+			// pause.addEventListener( 'click', function( event ) {
+			// 	event.preventDefault();
+			// 	hyperlapse.pause();
+			// }, false );
+			//
+			// var next = document.getElementById( 'nextButton');
+			// next.addEventListener( 'click', function( event ) {
+			// 	event.preventDefault();
+			// 	hyperlapse.next();
+			// }, false );
+			//
+			// var prev = document.getElementById( 'prevButton');
+			// prev.addEventListener( 'click', function( event ) {
+			// 	event.preventDefault();
+			// 	hyperlapse.prev();
+			// }, false );
 
 			/* Hyperlapse */
 
@@ -140,16 +163,16 @@
 				lookat: lookat_point,
 				fov: 80,
 				millis: 50,
-				width: window.innerWidth,
-				height: window.innerHeight,
+				width: 1280,//window.innerWidth,
+				height: 640,//window.innerHeight,
 				zoom: 2,
 				use_lookat: true,
 				distance_between_points: 5,
 				max_points: 100,
 				elevation: _elevation
 			});
-			
-			
+
+
 
 			hyperlapse.onError = function(e) {
 				show( "ERROR: "+ e.message );
@@ -177,17 +200,18 @@
 
 			hyperlapse.onLoadComplete = function(e) {
 				show( "" +
-					"Start: " + start_pin.getPosition().toString() + 
-					"<br>End: " + end_pin.getPosition().toString() + 
-					"<br>Lookat: " + pivot_pin.getPosition().toString() + 
+					"Start: " + start_pin.getPosition().toString() +
+					"<br>End: " + end_pin.getPosition().toString() +
+					"<br>Lookat: " + pivot_pin.getPosition().toString() +
 					"<br>Ready." );
+				//hyperlapse.play(); Play the video once the trails has been completely generated
 			};
 
 			hyperlapse.onFrame = function(e) {
 				show( "" +
-					"Start: " + start_pin.getPosition().toString() + 
-					"<br>End: " + end_pin.getPosition().toString() + 
-					"<br>Lookat: " + pivot_pin.getPosition().toString() + 
+					"Start: " + start_pin.getPosition().toString() +
+					"<br>End: " + end_pin.getPosition().toString() +
+					"<br>Lookat: " + pivot_pin.getPosition().toString() +
 					"<br>Position: "+ (e.position+1) +" of "+ hyperlapse.length() );
 				camera_pin.setPosition(e.point.location);
 			};
@@ -228,19 +252,17 @@
 				//hyperlapse.position.y = py;
 			}, false );
 
-			
-
 			/* Dat GUI */
 
 			var gui = new dat.GUI();
 
 			var o = {
-				distance_between_points:10, 
-				max_points:100, 
-				fov: 80, 
-				elevation:Math.floor(_elevation), 
-				tilt:0, 
-				millis:50, 
+				distance_between_points:10,
+				max_points:100,
+				fov: 80,
+				elevation:Math.floor(_elevation),
+				tilt:0,
+				millis:50,
 				offset_x:0,
 				offset_y:0,
 				offset_z:0,
@@ -261,13 +283,14 @@
 					}
 
 					request = {
-						origin: start_point, 
-						destination: end_point, 
-						travelMode: google.maps.DirectionsTravelMode.DRIVING
+						origin: start_point,
+						destination: end_point,
+						travelMode: google.maps.DirectionsTravelMode.WALKING
 					};
 
 					directions_service.route(request, function(response, status) {
-						if (status == google.maps.DirectionsStatus.OK) {   
+						if (status == google.maps.DirectionsStatus.OK) {
+							console.log(response)
 							hyperlapse.generate({route: response});
 						} else {
 							console.log(status);
@@ -301,7 +324,6 @@
 					});
 				}
 			};
-
 
 			var scn = gui.addFolder('screen');
 			scn.add(o, 'screen_width', window.innerHeight).listen();
@@ -372,7 +394,7 @@
 			});
 
 			parameters.open();
-			
+
 
 			var play_controls = gui.addFolder('play controls');
 			play_controls.add(hyperlapse, 'play');
@@ -414,24 +436,28 @@
 			};
 
 			o.generate();
+			//hyperlapse.play();
 		}
 
 		window.onload = init;
-	</script> 
-</head> 
-<body> 
-	<div id="pano" style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index:-1;"></div>
+	</script>
+</head>
+<body>
+	<!--div id="pano" style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index:-1;"></div-->
 	<div id="controls">
 		<div id="map" style="width: 400px; height: 300px; float: left; padding: 0;"></div>
 		<div id="controls" style="">
-			<form id="map_form">
+			<!-- <button id="playButton">Play</button>
+			<button id="pauseButton">Pause</button>
+			<button id="nextButton">Next</button>
+			<button id="prevButton">Prev</button> -->
+			<!--form id="map_form">
 				<input type="text" name="address" id="address" />
 				<button type="submit" id="searchButton" >Search</button>
-			</form>
+			</form-->
 		</div>
 		<div id="text" style="width: 500px; height: 120px; float: left; padding-top: 10px; z-index:0; border-style:solid; border-width:medium;"></div>
 	</div>
-	
-	
-</body> 
+	<div id="pano"></div>
+</body>
 </html>
