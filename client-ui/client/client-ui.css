@@ -1,5 +1,70 @@
 .map-container {
-  width: auto;
-  max-width: 100%;
-  height: 500px;
+  width: 300px;
+  height: 300px;
+  border-radius: 75px;
+  position: absolute;
+  left: 3%;
+  top: 3%;
+  z-index: 3;
+  box-shadow:0 10px 30px rgba(0, 0, 0, 0.19), 0 6px 10px rgba(0, 0, 0, 0.23);
+}
+
+#controller {
+  width:40%;
+  margin-left:'auto';
+  margin-right:'auto';
+  top:75%;
+  left:50%;
+  position:absolute;
+  transform:translate(-50%,0%);
+  border-radius: 40px !important;
+  padding-top: 20px;
+  padding-bottom:20px;
+}
+
+.circle-icon{
+  border-radius:24px;
+}
+.inactive{
+  background: #FFF;
+}
+
+.active{
+  /*border-radius: 24px;*/
+  background: none rgba(0, 0, 0, 0.2)!important;
+}
+
+.loader{
+  width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-bottom: 1em;
+  text-align: center;
+}
+
+.icon_small{
+  position: absolute !important;
+  font-size: 24px !important;
+  top: 12px !important;
+  left: 12px !important;
+}
+
+.icon_medium{
+  font-size: 36px !important;
+}
+
+.icon_large{
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  font-size: 48px !important;
+}
+
+#panorama{
+  position:absolute;
+  right:0;
+  z-index: -1;
+}
+#panorama:hover{
+  cursor: pointer;
 }

@@ -97,7 +97,7 @@ GSVPANO.PanoLoader = function (parameters) {
 
 	this.load = function (location, callback) {
 
-		console.log('Load for', location);
+		// console.log('Load for', location);
 		var self = this;
 		_panoClient.getPanoramaByLocation(location, 50, function (result, status) {
 			if (status === google.maps.StreetViewStatus.OK) {
