@@ -1,0 +1,22 @@
+html,body{ margin:0; padding:0; height:100%; width:100%;}
+
+/*.map-container {
+  width: 1600px;
+  /*width: 100%;
+  max-height: 100%;
+  /*height: 100%;
+  overflow: scroll;
+  max-width: 100%;
+  height: 1000px;
+}*/
+.map-container{
+  position: absolute;
+  left: 0;
+  top: 64px;
+  width: 75%;
+  height: calc(100% - 64px);
+}
+
+#card > div{
+  height:100%;
+}
