@@ -26,6 +26,9 @@ UserList = React.createClass({
 
     }
   },
+  handleMarkerClicked: function(lat, lng) {
+    this.props.clickMarker({lat:lat, lng:lng})
+  },
   render(){
     //var userList = this.state.userList;
     var userList = this.props.userListItems;
@@ -39,6 +42,7 @@ UserList = React.createClass({
       userItemList.push(
         <div>
         <ListItem
+          onTouchTap={this.handleMarkerClicked.bind(this,userList[i].lastPosition.lat, userList[i].lastPosition.lng)}
           primaryText={userList[i].name}
           secondaryText={userList[i].status}
           leftAvatar={<Avatar backgroundColor={statusColor}>{userList[i].name.charAt(0)}</Avatar>}

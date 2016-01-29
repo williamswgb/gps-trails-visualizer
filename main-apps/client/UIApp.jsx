@@ -46,6 +46,9 @@ UIApp = React.createClass({
       userList: this.props.userList
     }
   },
+  handleSearchMarker: function(marker) {
+    this.props.filterMarker(marker)
+  },
   handleToggle: function(){
     this.setState({open: !this.state.open});
   },
@@ -91,12 +94,21 @@ UIApp = React.createClass({
       newUserItems = newUserItems.concat(userItems);
     }
     else{
+      //TODO: Sort items based on available categories in the current userlist only
+      var filter = (sortBy == 'Status' ? 'status' : 'loginFrom');
+      var category = []
+
+      for(var j in userItems){
+        if(category.indexOf(userItems[j][filter]) == -1){
+          category.push(userItems[j][filter]);
+        }
+      }
+
       newSort.push((currentSort[0] == sortBy ? ((currentSort[1]+1) % sortMethod[sortBy].length) : 0));
 
       for(var i = 0; i < sortMethod[sortBy].length; i++){
         var filteredUserList = userItems.filter(function(el){
-          var filter = (sortBy == 'Status' ? el.status : el.loginFrom);
-          return filter == sortMethod[sortBy][(newSort[1]+i) % sortMethod[sortBy].length];
+          return el[filter] == sortMethod[sortBy][(newSort[1]+i) % sortMethod[sortBy].length];
         })
         filteredUserList.sort(function(a,b){
           if(a.name < b.name){
@@ -116,6 +128,7 @@ UIApp = React.createClass({
   },
   render() {
     var d = new Date();
+    var selfPosition = this.props.self
     return <div>
       <AppBar
         title="Home"
@@ -136,6 +149,7 @@ UIApp = React.createClass({
         <div style={{height: '40%'}}>
           <List valueLink={{value: this.state.selectedIndex, requestChange: this.handleUpdateSelectedIndex}}>
             <ListItem
+              onTouchTap={this.handleSearchMarker.bind(this, selfPosition)}
               primaryText="Hi, William!"
               leftAvatar={<Avatar backgroundColor={colors.red500}>W</Avatar>}
               rightIconButton={<IconMenu iconButtonElement={<IconButton iconClassName="material-icons">more_vert</IconButton>}>
@@ -186,7 +200,7 @@ UIApp = React.createClass({
               </IconButton>
             </ToolbarGroup>
           </Toolbar>
-          <UserList userListItems={this.state.userList}/>
+          <UserList userListItems={this.state.userList} clickMarker={this.handleSearchMarker}/>
         </div>
       </Card>
     </div>;

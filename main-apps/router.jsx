@@ -28,7 +28,7 @@ homeRoutes.route('/:username', {
       };
 
       ReactLayout.render(App, {
-        map: <MyTestMap mapOptions={mapOptions}/>
+        mapOptions: mapOptions
       });
     };
     var geoError = function(error) {

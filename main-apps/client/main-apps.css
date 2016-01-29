@@ -20,3 +20,19 @@ html,body{ margin:0; padding:0; height:100%; width:100%;}
 #card > div{
   height:100%;
 }
+
+.online{
+  color: #4caf50;
+}
+
+.recording{
+  color: #2196F3;
+}
+
+.offline{
+  color: #9E9E9E;
+}
+
+.self{
+  color: #F44336;
+}
