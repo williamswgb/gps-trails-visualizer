@@ -21,12 +21,22 @@ var {
   Toolbar,
   ToolbarGroup,
   ToolbarSeparator,
-  ToolbarTitle
+  ToolbarTitle,
+  Dialog,
+  FlatButton
   } = MUI;
 var { ThemeManager, LightRawTheme } = Styles;
 var colors = Styles.Colors
 
 UIApp = React.createClass({
+  mixins: [ReactMeteorData],
+
+  getMeteorData() {
+    return {
+      userList: Users.find().fetch(),
+    }
+  },
+
   childContextTypes: {
       muiTheme: React.PropTypes.object
   },
@@ -39,18 +49,39 @@ UIApp = React.createClass({
 
   getInitialState() {
     return{
+      openDialog: false,
       open: false,
       openRightNav: true,
       selectedIndex: 1,
       sorted: ['Alphabet',1],
-      userList: this.props.userList
+      userList: [],
+      selectedUser: this.props.self
     }
   },
-  handleSearchMarker: function(marker) {
-    this.props.filterMarker(marker)
+  componentDidMount() {
+    this.setState({userList: this.data.userList});
+  },
+  handleSearchMarker: function(name) {
+    if(name == this.props.self.name){
+      this.setState({selectedUser: this.props.self});
+      this.props.filterMarker(this.props.self.lastPosition);
+    } else {
+      var userList = this.data.userList
+      var userResult = userList.filter(function(user) {
+        return user.name == name;
+      });
+      this.setState({selectedUser: userResult[0]});
+      this.props.filterMarker(userResult[0].lastPosition);
+    }
   },
   handleToggle: function(){
     this.setState({open: !this.state.open});
+  },
+  handleCloseDialog: function(){
+    this.setState({openDialog: false})
+  },
+  handleOpenDialog: function() {
+    this.setState({openDialog: true})
   },
   handleClose: function(){
     this.setState({open: false})
@@ -60,7 +91,7 @@ UIApp = React.createClass({
   },
   filterUserList: function(e) {
     var keyword = this.refs.searchUser.getValue().toLowerCase();
-    var userItems = this.props.userList;
+    var userItems = this.data.userList;
 
     var filteredUserList = userItems.filter(function(el){
       return el.name.toLowerCase().indexOf(keyword) == 0 ||
@@ -69,7 +100,7 @@ UIApp = React.createClass({
     this.setState({userList: filteredUserList});
   },
   sortUserList: function(sortBy){
-    var userItems = this.state.userList
+    var userItems = this.data.userList
     var currentSort = this.state.sorted
     var sortMethod = {
       'Status': ['Online', 'Recording', 'Offline'],
@@ -126,9 +157,78 @@ UIApp = React.createClass({
     }
     this.setState({userList: newUserItems, sorted: newSort});
   },
+  //TODO: -> Move Sorting and Filtering User from UIApp to UserList component
+  //         UIApp component only pass commands to UserList
+  //      -> Change this.state.userList to this.data.userList
+  componentWillReceiveProps(nextProps, nextState) {
+    var userList = this.data.userList
+    console.log(nextProps.marker)
+    console.log(this.state.selectedUser.name)
+    if(nextProps.marker != this.state.selectedUser.name){
+      this.handleSearchMarker(nextProps.marker);
+    }
+  },
   render() {
     var d = new Date();
-    var selfPosition = this.props.self
+    var actions = [
+      <FlatButton
+        label="Cancel"
+        secondary={true}
+        onTouchTap={this.handleCloseDialog}
+      />,
+      <FlatButton
+        label="Submit"
+        primary={true}
+        keyboardFocused={true}
+        onTouchTap={this.handleCloseDialog}
+      />,
+    ]
+
+    var trailsItem = []
+    var user = this.state.selectedUser
+    var trails = user.trails
+
+    for(var i in trails){
+      trailsItem.push(<ListItem
+        key={i+1}
+        primaryText={trails[i].name}
+        secondaryTextLines={2}
+        secondaryText={
+          <p>
+            <span>
+              Distances: {trails[i].distances} km | Calories: {trails[i].calories} kcal
+            </span>
+            <br/>
+            {trails[i].time}
+          </p>
+        }/>)
+    }
+
+    var profileItem = [
+      <ListItem
+        key={1}
+        disabled={true}
+        innerDivStyle={{paddingBottom:'0px'}}
+        primaryText={(user.status != 'Offline' ?
+          "Login From" : "Last Seen")}
+        secondaryText={(user.status != 'Offline' ?
+          user.loginFrom : d.toString())}
+        />,
+      <ListItem
+        key={2}
+        disabled={true}
+        primaryText={(user.status != 'Offline' ?
+          "Current Location" : "Last Location")}
+        secondaryTextLines={2}
+        secondaryText={
+          <p>
+            <span>{user.lastLocation}</span><br/>
+            {user.lastPosition.lat}, {user.lastPosition.lng}
+          </p>
+        }
+        />
+    ]
+
     return <div>
       <AppBar
         title="Home"
@@ -149,33 +249,50 @@ UIApp = React.createClass({
         <div style={{height: '40%'}}>
           <List valueLink={{value: this.state.selectedIndex, requestChange: this.handleUpdateSelectedIndex}}>
             <ListItem
-              onTouchTap={this.handleSearchMarker.bind(this, selfPosition)}
-              primaryText="Hi, William!"
-              leftAvatar={<Avatar backgroundColor={colors.red500}>W</Avatar>}
+              onTouchTap={this.props.clickMarker.bind(this, this.props.self.name )}
+              primaryText={"Hi, "+ this.props.self.name +"!"}
+              leftAvatar={<Avatar backgroundColor={colors.red500}>{this.props.self.name.charAt(0)}</Avatar>}
               rightIconButton={<IconMenu iconButtonElement={<IconButton iconClassName="material-icons">more_vert</IconButton>}>
-                <MenuItem leftIcon={<FontIcon className="material-icons">person</FontIcon>}>Logout</MenuItem>
+                <MenuItem onTouchTap={this.handleOpenDialog} leftIcon={<FontIcon className="material-icons">person</FontIcon>}>Sign Out</MenuItem>
                 <MenuItem leftIcon={<FontIcon className="material-icons">account_circle</FontIcon>}>Remove Account</MenuItem>
               </IconMenu>}/>
           </List>
+          <Dialog
+            contentStyle={{width:'30%'}}
+            title="Sign Out"
+            actions={actions}
+            modal={false}
+            open={this.state.openDialog}
+            onRequestClose={this.handleCloseDialog}>
+            Are you sure you want to sign out?
+          </Dialog>
           <Divider style={{height:'2px'}}/>
-          <CardText style={{overflowY:'scroll', height:'calc(100% - 106px)'}}>
-            Status: Online<br/>
-            Login From: Mobile<br/>
-            Current Location: NTU (Lat, Lng)<br/>
-            Last Seen: {d.toString()}<br/> {/*{d.toString().substring(0,21)+' '+d.toString().substring(35,38)}<br/>*/}
-            Last Position: (Lat, Lng)<br/>
-            Trails: <br/>
-            <ul>
-              <li>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</li>
-              <li>Donec mattis pretium massa. Aliquam erat volutpat. Nulla facilisi.</li>
-              <li>Donec vulputate interdum sollicitudin. Nunc lacinia auctor quam sed pellentesque.</li>
-              <li>Aliquam dui mauris, mattis quis lacus id, pellentesque lobortis odio.</li>
-              <li>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</li>
-              <li>Donec mattis pretium massa. Aliquam erat volutpat. Nulla facilisi.</li>
-              <li>Donec vulputate interdum sollicitudin. Nunc lacinia auctor quam sed pellentesque.</li>
-              <li>Aliquam dui mauris, mattis quis lacus id, pellentesque lobortis odio.</li>
-            </ul>
-          </CardText>
+          <div style={{overflowY:'scroll', height:'calc(100% - 74px)'}}>
+          {/* <CardText style={{overflowY:'scroll', height:'calc(100% - 106px)'}}> */}
+            <List>
+              <ListItem
+                disabled={true}
+                innerDivStyle={{paddingBottom:'0px'}}
+                primaryText={
+                  <span style={{fontSize: '24px'}}>{user.name}</span>
+                }
+                />
+              <ListItem
+                disabled={true}
+                innerDivStyle={{paddingBottom:'0px'}}
+                primaryText="Status"
+                secondaryText={user.status}
+                />
+              {profileItem}
+              <Divider inset={true} />
+              <ListItem
+                disabled={true}
+                primaryText="Trails"
+                initiallyOpen={false}
+                nestedItems={trailsItem}
+              />
+            </List>
+          </div>
         </div>
         <div style={{height: '60%'}}>
           <Divider style={{height:'2px'}}/>
@@ -200,7 +317,7 @@ UIApp = React.createClass({
               </IconButton>
             </ToolbarGroup>
           </Toolbar>
-          <UserList userListItems={this.state.userList} clickMarker={this.handleSearchMarker}/>
+          <UserList userListItems={this.state.userList} clickMarker={this.props.clickMarker}/>
         </div>
       </Card>
     </div>;

@@ -15,19 +15,14 @@ UserList = React.createClass({
   childContextTypes: {
       muiTheme: React.PropTypes.object
   },
-
   getChildContext() {
     return {
         muiTheme: ThemeManager.getMuiTheme(LightRawTheme)
     };
   },
-  getInitialState() {
-    return{
-
-    }
-  },
-  handleMarkerClicked: function(lat, lng) {
-    this.props.clickMarker({lat:lat, lng:lng})
+  handleMarkerClicked: function(name){ //lat, lng) {
+    //this.props.clickMarker({lat:lat, lng:lng})
+    this.props.clickMarker(name)
   },
   render(){
     //var userList = this.state.userList;
@@ -40,9 +35,9 @@ UserList = React.createClass({
       var statusColor = (userList[i].status == 'Online' ? colors.green500 : (userList[i].status == 'Recording' ? colors.blue500 : colors.grey500));
 
       userItemList.push(
-        <div>
+        <div key={i}>
         <ListItem
-          onTouchTap={this.handleMarkerClicked.bind(this,userList[i].lastPosition.lat, userList[i].lastPosition.lng)}
+          onTouchTap={this.handleMarkerClicked.bind(this, userList[i].name)}
           primaryText={userList[i].name}
           secondaryText={userList[i].status}
           leftAvatar={<Avatar backgroundColor={statusColor}>{userList[i].name.charAt(0)}</Avatar>}
@@ -53,7 +48,7 @@ UserList = React.createClass({
       )
     }
 
-    return <List subheader="User List" valueLink={{value: this.state.selectedIndex, requestChange: this.handleUpdateSelectedIndex}} style={{overflowY:'scroll', height:'calc(100% - 117px)'}}>
+    return <List subheader="User List" style={{overflowY:'scroll', height:'calc(100% - 117px)'}}>
       {userItemList}
       </List>
   }
