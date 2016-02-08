@@ -5,7 +5,7 @@ Map = React.createClass({
   componentDidMount() {
     GoogleMaps.load();
   },
-  // Loads items from the Collection and puts them on this.data.tasks
+
   getMeteorData() {
     /*
     Get all active user from DB and get their location
@@ -17,7 +17,8 @@ Map = React.createClass({
       loaded: GoogleMaps.loaded(),
       mapOptions: GoogleMaps.loaded() && this._mapOptions(),
       userList: Users.find().fetch(),
-      filter: this.props.filter
+      filter: this.props.filter,
+      self: this.props.self
     };
     // let query = {};
     //
@@ -54,6 +55,7 @@ Map = React.createClass({
         userList={this.data.userList}
         filter={this.data.filter}
         clickMarker={this.props.clickMarker}
+        self={this.data.self}
         />;
 
     return <div>Loading map...</div>;

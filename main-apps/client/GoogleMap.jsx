@@ -13,21 +13,7 @@ GoogleMap = React.createClass({
       infowindow: new google.maps.InfoWindow()
     }
   },
-  shouldComponentUpdate(nextProps, nextState) {
-    return (nextState.filter != this.state.filter);
-  },
-  componentWillUpdate(nextProps, nextState) {
-    var map = GoogleMaps.maps[this.props.name].instance
-    var infowindow = this.state.infowindow
-    map.panTo({lat: nextProps.filter.lat, lng: nextProps.filter.lng})
-    map.setZoom(nextProps.options.zoom-3)
-
-    infowindow.close();
-    //Open infowindow when the marker is selected
-    // infowindow.setContent("Name");
-    // infowindow.open(map, marker);
-  },
-  _updateMarker: function(i, user, markers){
+  updateMarker: function(i, user, markers){
     markers[i].setPosition({
       lat: user.lastPosition.lat,
       lng: user.lastPosition.lng
@@ -42,7 +28,7 @@ GoogleMap = React.createClass({
 
     return markers
   },
-  _addNewMarker: function(user){
+  addNewMarker: function(user){
     var self = this;
     var map = GoogleMaps.maps[this.props.name].instance;
     var markerIcon = (user.status == 'Online' ? 'directions_walk' :
@@ -86,18 +72,66 @@ GoogleMap = React.createClass({
 
       GoogleMaps.ready(self.props.name, function(map) {
         var marker = new MarkerWithLabel({
+          name: self.props.self.name,
           position: map.options.center,
           icon: ' ',
           map: map.instance,
+          labelAnchor: new google.maps.Point(20,25),
           labelContent: '<i style="font-size:40px" class="material-icons self">accessibility</i>'
         });
 
+        marker.addListener('click', function() {
+          var selfObj = self.props.self
+          self.props.clickMarker(selfObj.name)
+          map.instance.panTo({lat: selfObj.lastPosition.lat, lng: selfObj.lastPosition.lng})
+          map.instance.setZoom(self.props.options.zoom-3)
+
+          var infowindow = self.state.infowindow
+          infowindow.close();
+          infowindow.setContent(self.props.self.name);
+          infowindow.open(map.instance, this);
+        });
+
         for(i in users){
-          markers.push(self._addNewMarker(users[i]));
+          markers.push(self.addNewMarker(users[i]));
         }
         self.setState({selfMarker: marker, markers: markers, users: users})
       });
     });
+  },
+  shouldComponentUpdate(nextProps, nextState) {
+    return (nextState.filter != this.state.filter);
+  },
+  componentWillUpdate(nextProps, nextState) {
+    var map = GoogleMaps.maps[this.props.name].instance
+    var infowindow = this.state.infowindow
+    var user
+    var marker
+
+    if(nextProps.filter == this.props.self.name){
+      user = this.props.self
+      marker = this.state.selfMarker
+    } else {
+      var userList = this.props.userList
+      var userResult = userList.filter(function(user) {
+        return user.name == nextProps.filter;
+      });
+      user = userResult[0]
+
+      var markers = this.state.markers
+      var markerResult = markers.filter(function(marker) {
+        return marker.name == nextProps.filter
+      });
+      marker = markerResult[0]
+    }
+
+    map.panTo({lat: user.lastPosition.lat, lng: user.lastPosition.lng})
+    map.setZoom(nextProps.options.zoom-3)
+
+    //Open infowindow when the marker is selected
+    infowindow.close();
+    infowindow.setContent(nextProps.filter);
+    infowindow.open(map, marker);
   },
   componentWillReceiveProps(nextProps, nextState) {
     if (nextProps.filter != '' && this.state.filter != nextProps.filter) {
@@ -128,7 +162,7 @@ GoogleMap = React.createClass({
     if(oldUsers.length < newUsers.length) {
       //Add new marker to map
       for(i in oldNewUser){
-        var newMarker = this._addNewMarker(oldNewUser[i])
+        var newMarker = this.addNewMarker(oldNewUser[i])
 
         //Move mapview position to the new marker
         map.panTo({
@@ -186,11 +220,11 @@ GoogleMap = React.createClass({
     for(var i in newUsers){
       if(i >= oldUsers.length){
         //Create new marker
-        markers.push(this._addNewMarker(newUsers[i]));
+        markers.push(this.addNewMarker(newUsers[i]));
       }
       else{
         //Update Marker Position & Change Icon
-        markers = this._updateMarker(i, newUsers[i], markers)
+        markers = this.updateMarker(i, newUsers[i], markers)
 
         switch(newUsers[i].status) {
           case "Online":

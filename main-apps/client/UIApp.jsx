@@ -54,25 +54,25 @@ UIApp = React.createClass({
       openRightNav: true,
       selectedIndex: 1,
       sorted: ['Alphabet',1],
-      userList: [],
-      selectedUser: this.props.self
+      selectedUser: this.props.self,
+      searchFilter: ''
     }
-  },
-  componentDidMount() {
-    this.setState({userList: this.data.userList});
   },
   handleSearchMarker: function(name) {
     if(name == this.props.self.name){
       this.setState({selectedUser: this.props.self});
-      this.props.filterMarker(this.props.self.lastPosition);
+      this.props.filterMarker(name);
     } else {
       var userList = this.data.userList
       var userResult = userList.filter(function(user) {
         return user.name == name;
       });
       this.setState({selectedUser: userResult[0]});
-      this.props.filterMarker(userResult[0].lastPosition);
     }
+    this.props.filterMarker(name);
+  },
+  handleSelfClicked: function(name){
+    this.props.clickMarker(name)
   },
   handleToggle: function(){
     this.setState({open: !this.state.open});
@@ -89,81 +89,28 @@ UIApp = React.createClass({
   handleUpdateSelectedIndex: function(e,index) {
     this.setState({selectedIndex: index})
   },
-  filterUserList: function(e) {
+  handleChangeFilter: function() {
     var keyword = this.refs.searchUser.getValue().toLowerCase();
-    var userItems = this.data.userList;
-
-    var filteredUserList = userItems.filter(function(el){
-      return el.name.toLowerCase().indexOf(keyword) == 0 ||
-        el.status.toLowerCase().indexOf(keyword) == 0;
-    })
-    this.setState({userList: filteredUserList});
+    this.setState({searchFilter: keyword});
   },
-  sortUserList: function(sortBy){
-    var userItems = this.data.userList
+  handleSortList: function(sortBy){
     var currentSort = this.state.sorted
     var sortMethod = {
       'Status': ['Online', 'Recording', 'Offline'],
       'Device': ['Computer', 'Mobile', 'Smartwatch', '']
     }
     var newSort = [sortBy];
-    var newUserItems = [];
 
     if(sortBy == 'Alphabet'){
       newSort.push((currentSort[0] == 'Alphabet' ? !currentSort[1] : 1));
-      userItems.sort(function(a,b){
-        if(a.name < b.name){
-          return (currentSort[0] == 'Alphabet' && currentSort[1] ? 1: -1)
-        }
-        else if(a.name > b.name){
-          return (currentSort[0] == 'Alphabet' && currentSort[1] ? -1: 1)
-        }
-        else{
-          return 0
-        }
-      });
-      newUserItems = newUserItems.concat(userItems);
     }
     else{
-      //TODO: Sort items based on available categories in the current userlist only
-      var filter = (sortBy == 'Status' ? 'status' : 'loginFrom');
-      var category = []
-
-      for(var j in userItems){
-        if(category.indexOf(userItems[j][filter]) == -1){
-          category.push(userItems[j][filter]);
-        }
-      }
-
       newSort.push((currentSort[0] == sortBy ? ((currentSort[1]+1) % sortMethod[sortBy].length) : 0));
-
-      for(var i = 0; i < sortMethod[sortBy].length; i++){
-        var filteredUserList = userItems.filter(function(el){
-          return el[filter] == sortMethod[sortBy][(newSort[1]+i) % sortMethod[sortBy].length];
-        })
-        filteredUserList.sort(function(a,b){
-          if(a.name < b.name){
-            return -1
-          }
-          else if(a.name > b.name){
-            return 1
-          }
-          else{
-            return 0
-          }
-        });
-        newUserItems = newUserItems.concat(filteredUserList);
-      }
     }
-    this.setState({userList: newUserItems, sorted: newSort});
+    this.setState({sorted: newSort});
   },
-  //TODO: -> Move Sorting and Filtering User from UIApp to UserList component
-  //         UIApp component only pass commands to UserList
-  //      -> Change this.state.userList to this.data.userList
   componentWillReceiveProps(nextProps, nextState) {
     var userList = this.data.userList
-    console.log(nextProps.marker)
-    console.log(this.state.selectedUser.name)
     if(nextProps.marker != this.state.selectedUser.name){
       this.handleSearchMarker(nextProps.marker);
     }
@@ -249,7 +196,7 @@ UIApp = React.createClass({
         <div style={{height: '40%'}}>
           <List valueLink={{value: this.state.selectedIndex, requestChange: this.handleUpdateSelectedIndex}}>
             <ListItem
-              onTouchTap={this.props.clickMarker.bind(this, this.props.self.name )}
+              onTouchTap={this.handleSelfClicked.bind(this, this.props.self.name )}
               primaryText={"Hi, "+ this.props.self.name +"!"}
               leftAvatar={<Avatar backgroundColor={colors.red500}>{this.props.self.name.charAt(0)}</Avatar>}
               rightIconButton={<IconMenu iconButtonElement={<IconButton iconClassName="material-icons">more_vert</IconButton>}>
@@ -301,23 +248,23 @@ UIApp = React.createClass({
               <TextField
                 hintText={'Search User'}
                 style={{minWidth: '168px', width: '100%'}}
-                onChange={this.filterUserList}
+                onChange={this.handleChangeFilter}
                 ref='searchUser'
               />
             </ToolbarGroup>
             <ToolbarGroup float={'right'} style={{display: 'inline-block'}}>
-              <IconButton tooltip={"Sort by Alphabet"} tooltipPosition="bottom-right" touch={true} iconClassName="material-icons" onTouchTap={this.sortUserList.bind(this, 'Alphabet')}>
+              <IconButton tooltip={"Sort by Alphabet"} tooltipPosition="bottom-right" touch={true} iconClassName="material-icons" onTouchTap={this.handleSortList.bind(this, 'Alphabet')}>
                 sort_by_alpha
               </IconButton>
-              <IconButton tooltip={"Sort by Status"} tooltipPosition="bottom-center" touch={true} iconClassName="material-icons" onTouchTap={this.sortUserList.bind(this, 'Status')}>
+              <IconButton tooltip={"Sort by Status"} tooltipPosition="bottom-center" touch={true} iconClassName="material-icons" onTouchTap={this.handleSortList.bind(this, 'Status')}>
                 directions_run
               </IconButton>
-              <IconButton tooltip={"Sort by Device"} tooltipPosition="bottom-left" touch={true} iconClassName="material-icons" onTouchTap={this.sortUserList.bind(this, 'Device')}>
+              <IconButton tooltip={"Sort by Device"} tooltipPosition="bottom-left" touch={true} iconClassName="material-icons" onTouchTap={this.handleSortList.bind(this, 'Device')}>
                 devices_other
               </IconButton>
             </ToolbarGroup>
           </Toolbar>
-          <UserList userListItems={this.state.userList} clickMarker={this.props.clickMarker}/>
+          <UserList clickMarker={this.props.clickMarker} searchFilter={this.state.searchFilter} sorted={this.state.sorted}/>
         </div>
       </Card>
     </div>;

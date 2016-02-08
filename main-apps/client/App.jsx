@@ -138,7 +138,7 @@ App = React.createClass({
   render() {
     return <div>
       <UIApp filterMarker={this.handleFilterMarker} self={this.data.self} marker={this.state.marker} clickMarker={this.handleClickMarker}/>
-      <Map mapOptions={this.props.mapOptions} filter={this.state.filter} clickMarker={this.handleClickMarker}/>
+      <Map mapOptions={this.props.mapOptions} filter={this.state.filter} clickMarker={this.handleClickMarker} self={this.data.self}/>
     </div>;
   }
 });
