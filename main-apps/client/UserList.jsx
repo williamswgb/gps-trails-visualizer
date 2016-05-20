@@ -16,7 +16,7 @@ UserList = React.createClass({
 
   getMeteorData() {
     return {
-      userList: Users.find().fetch(),
+      users: Meteor.users.find({_id:{$ne:Meteor.userId()}}).fetch(),
       searchFilter: this.props.searchFilter,
       sorted: this.props.sorted
     }
@@ -33,23 +33,23 @@ UserList = React.createClass({
     this.props.clickMarker(name)
   },
   filterSearchAndSortList: function(){
-    var userList = this.data.userList;
+    var users = this.data.users;
     var searchFilter = this.data.searchFilter;
     var sorted = this.data.sorted;
 
     //Search Filter
-    userList = userList.filter(function(user){
-      return user.name.toLowerCase().indexOf(searchFilter) == 0 ||
-        user.status.toLowerCase().indexOf(searchFilter) == 0;
+    users = users.filter(function(user){
+      return user.profile.name.toLowerCase().indexOf(searchFilter) == 0 ||
+        user.profile.status.toLowerCase().indexOf(searchFilter) == 0;
     })
 
     //Sort List
     if(sorted[0] == 'Alphabet'){
-      userList.sort(function(a,b){
-        if(a.name < b.name){
+      users.sort(function(a,b){
+        if(a.profile.name < b.profile.name){
           return (sorted[0] == 'Alphabet' && sorted[1] ? -1: 1)
         }
-        else if(a.name > b.name){
+        else if(a.profile.name > b.profile.name){
           return (sorted[0] == 'Alphabet' && sorted[1] ? 1: -1)
         }
         else{
@@ -62,55 +62,56 @@ UserList = React.createClass({
         'Status': ['Online', 'Recording', 'Offline'],
         'Device': ['Computer', 'Mobile', 'Smartwatch', '']
       }
-      var newUserList = [];
+      var newUsers = [];
 
       //TODO: Sort items based on available categories in the current userlist only
       var category = []
-      for(var j in userList){
-        if(category.indexOf(userList[j][filter]) == -1){
-          category.push(userList[j][filter]);
+      for(var j in users){
+        if(category.indexOf(users[j]['profile'][filter]) == -1){
+          category.push(users[j]['profile'][filter]);
         }
       }
 
       for(var i = 0; i < sortMethod[sorted[0]].length; i++){
-        var filteredUserList = userList.filter(function(user){
-          return user[filter] == sortMethod[sorted[0]][(sorted[1]+i) % sortMethod[sorted[0]].length];
+        var filteredUsers = users.filter(function(user){
+          return user['profile'][filter] == sortMethod[sorted[0]][(sorted[1]+i) % sortMethod[sorted[0]].length];
         })
 
-        filteredUserList.sort(function(a,b){
-          if(a.name < b.name){
+        filteredUsers.sort(function(a,b){
+          if(a.profile.name < b.profile.name){
             return -1
           }
-          else if(a.name > b.name){
+          else if(a.profile.name > b.profile.name){
             return 1
           }
           else{
             return 0
           }
         });
-        newUserList = newUserList.concat(filteredUserList);
+        newUsers = newUsers.concat(filteredUsers);
       }
-      userList = newUserList
+      users = newUsers
     }
 
-    return userList
+    return users
   },
   render(){
-    var userList = this.filterSearchAndSortList();
+    var users = this.filterSearchAndSortList();
     var userItemList = [];
 
-    for(var i=0; i < userList.length; i++){
-      var loginFromIcon = (userList[i].loginFrom == 'Computer'? 'computer' :
-        (userList[i].loginFrom == 'Mobile' ? 'smartphone' : (userList[i].loginFrom == 'Smartwatch' ? 'watch' : '')));
-      var statusColor = (userList[i].status == 'Online' ? colors.green500 : (userList[i].status == 'Recording' ? colors.blue500 : colors.grey500));
-
+    for(var i=0; i < users.length; i++){
+      var loginFromIcon = (users[i].profile.loginFrom == 'Computer'? 'computer' :
+        (users[i].profile.loginFrom == 'Mobile' ? 'smartphone' : (users[i].profile.loginFrom == 'Smartwatch' ? 'watch' : '')));
+      var statusColor = (users[i].profile.status == 'Online' ? colors.green500 : (users[i].profile.status == 'Recording' ? colors.blue500 : colors.grey500));
+      var avatar = (users[i].profile.avatar ? <Avatar src={users[i].profile.avatar}/> :
+        <Avatar backgroundColor={statusColor}>{users[i].profile.name.charAt(0)}</Avatar>)
       userItemList.push(
         <div key={i}>
         <ListItem
-          onTouchTap={this.handleMarkerClicked.bind(this, userList[i].name)}
-          primaryText={userList[i].name}
-          secondaryText={userList[i].status}
-          leftAvatar={<Avatar backgroundColor={statusColor}>{userList[i].name.charAt(0)}</Avatar>}
+          onTouchTap={this.handleMarkerClicked.bind(this, users[i].profile.name)}
+          primaryText={users[i].profile.name}
+          secondaryText={<p className={"status-"+users[i].profile.status.toLowerCase()}>{users[i].profile.status}</p>}
+          leftAvatar={avatar}
           rightIcon={<FontIcon className="material-icons">{loginFromIcon}</FontIcon>}
           />
         <Divider inset={true}/>

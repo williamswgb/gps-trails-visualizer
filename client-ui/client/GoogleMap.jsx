@@ -19,28 +19,47 @@ GoogleMap = React.createClass({
 
     var startPointMarker = new google.maps.Marker({
       position: startPoint,
-      map: map.instance
+      map: map.instance,
+      icon: {
+        url: '/images/flag-start-orange.png', // url
+        scaledSize: new google.maps.Size(24, 24), // scaled size
+        anchor: new google.maps.Point(6,24) // anchor
+      }
     });
     this.state.markers.startPoint = startPointMarker
 
     var endPointMarker = new google.maps.Marker({
       position: endPoint,
-      map: map.instance
+      map: map.instance,
+      icon: {
+        url: '/images/flag-finish.png', // url
+        scaledSize: new google.maps.Size(24, 24), // scaled size
+        anchor: new google.maps.Point(0,24) // anchor
+      }
     });
     this.state.markers.endPoint = endPointMarker
 
     var lookAtPointMarker = new google.maps.Marker({
       position: lookAtPoint,
       map: map.instance,
-      draggable: true
+      draggable: true,
+      icon: {
+        url: '/images/look-at-point.png', // url
+        scaledSize: new google.maps.Size(24, 24), // scaled size
+      }
     });
     this.state.markers.lookAtPoint = lookAtPointMarker
 
     var cameraPinMarker = new google.maps.Marker({
       position: startPoint,
       map: map.instance,
+      icon: {
+        url: '/images/runner.png',
+        scaledSize: new google.maps.Size(32, 32),
+      }
     });
     this.state.markers.cameraPinPoint = cameraPinMarker
+
 
     this.setState({markers:this.state.markers});
   },
@@ -48,8 +67,8 @@ GoogleMap = React.createClass({
     var ds = new google.maps.DirectionsService();
 
     var dr = new google.maps.DirectionsRenderer({
-        draggable: false,
-        markerOptions:{visible: false}
+      draggable: false,
+      markerOptions:{visible: false}
     });
 
     dr.setMap(this.state.map);

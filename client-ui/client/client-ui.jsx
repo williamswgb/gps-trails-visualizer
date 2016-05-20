@@ -32,8 +32,9 @@ MyTestMap = React.createClass({
       center: new google.maps.LatLng(map.lat, map.lng),
       zoom: map.zoom,
       scrollwheel: false,
-      draggable: false,
-      points: map.points
+      draggable: true,
+      points: map.points,
+      disableDefaultUI: true
     };
   },
   handleUpdate: function(val){

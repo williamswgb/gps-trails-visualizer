@@ -34,3 +34,7 @@ kadira:flow-router
 mrt:external-file-loader
 universe:modules-npm
 universe:utilities-react
+cosmos:browserify
+izzilab:material-ui
+mdg:geolocation
+outatime:geolib

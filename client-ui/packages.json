@@ -1,4 +1,5 @@
 {
   "eslint-plugin-react": "3.12.0",
-  "babel-eslint": "5.0.0-beta6"
+  "babel-eslint": "5.0.0-beta6",
+  "material-design-icons": "2.1.3"
 }

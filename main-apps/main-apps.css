@@ -36,3 +36,39 @@ html,body{ margin:0; padding:0; height:100%; width:100%;}
 .self{
   color: #F44336;
 }
+
+.admin-login-page{
+	text-align: center;
+	position: relative;
+	height: 100vh;
+}
+
+.status-online::before{
+  width:10px;
+  height:10px;
+  content:'';
+  background-color: #4caf50;
+  display:inline-block;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+.status-recording::before{
+  width:10px;
+  height:10px;
+  content:'';
+  background-color: #2196F3;
+  display:inline-block;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+.status-offline::before{
+  width:10px;
+  height:10px;
+  content:'';
+  background-color: #9E9E9E;
+  display:inline-block;
+  border-radius: 50%;
+  margin-right: 5px;
+}

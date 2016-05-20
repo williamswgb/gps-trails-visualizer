@@ -4,18 +4,19 @@ var homeRoutes = FlowRouter.group({
 });
 
 homeRoutes.route('/:username', {
+  triggersEnter: [function(context, redirect) {
+    var path = context.path
+    if(Meteor.userId() != null){
+      FlowRouter.go(path);
+    } else{
+      FlowRouter.go('/login')
+    }
+  }],
   action: function(){
-    // var handle = Tracker.autorun(function () {
-    //   var latLng = Geolocation.latLng();
-    //   if(latLng != null){
-    //     alert('Lat: '+latLng.lat+'\nLng: '+latLng.lng);
-    //     console.log('Lat: '+latLng.lat+'\nLng: '+latLng.lng);
-    //   }
-    // });
     var geoOptions = {
-        //  timeout: 60,
-         enableHighAccuracy: true,
-         maximumAge: 900
+      //  timeout: 60,
+       enableHighAccuracy: true,
+       maximumAge: 900
      }
 
     var geoSuccess = function(position) {
@@ -27,10 +28,29 @@ homeRoutes.route('/:username', {
         zoom: 17,
       };
 
-      ReactLayout.render(App, {
-        mapOptions: mapOptions
+      var geocoder = new google.maps.Geocoder;
+
+      geocoder.geocode({'location': {lat: mapOptions.lat, lng: mapOptions.lng}},
+       function(results, status) {
+        if (status === google.maps.GeocoderStatus.OK) {
+          if (results[1]) {
+            var lengthAddress = results[1].address_components.length
+            var location = results[1].address_components[0].short_name
+              + ', ' + results[1].address_components[lengthAddress-1].long_name
+
+            ReactLayout.render(App, {
+              mapOptions: mapOptions,
+              location: location
+            });
+          } else {
+            window.alert('No results found');
+          }
+        } else {
+          window.alert('Geocoder failed due to: ' + status);
+        }
       });
     };
+
     var geoError = function(error) {
       alert('Error occurred. Error code: ' + error.code);
       // error.code can be:
@@ -41,18 +61,15 @@ homeRoutes.route('/:username', {
     };
 
     navigator.geolocation.getCurrentPosition(geoSuccess, geoError, geoOptions);
+
     // var watchID = navigator.geolocation.watchPosition(geoSuccess, geoError, geoOptions);
     // console.log(watchID)
   }
 });
 
-var recordRoutes = FlowRouter.group({
-  prefix: '/record',
-  name: 'record',
-});
-
-recordRoutes.route('/:username',{
+var loginRoutes = FlowRouter.route('/login',{
   action: function(){
+    ReactLayout.render(Login, {});
     // if(!session.name){
     //   redirect to login page
     // }

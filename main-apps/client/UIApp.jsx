@@ -11,17 +11,10 @@ var {
   LeftNav,
   Avatar,
   Card,
-  CardActions,
-  CardHeader,
-  CardMedia,
-  CardTitle,
-  CardText,
   Divider,
   TextField,
   Toolbar,
   ToolbarGroup,
-  ToolbarSeparator,
-  ToolbarTitle,
   Dialog,
   FlatButton
   } = MUI;
@@ -33,10 +26,10 @@ UIApp = React.createClass({
 
   getMeteorData() {
     return {
-      userList: Users.find().fetch(),
+      userList: Meteor.users.find({_id:{$ne:Meteor.userId()}}).fetch(),
+      self: Meteor.user()
     }
   },
-
   childContextTypes: {
       muiTheme: React.PropTypes.object
   },
@@ -54,18 +47,17 @@ UIApp = React.createClass({
       openRightNav: true,
       selectedIndex: 1,
       sorted: ['Alphabet',1],
-      selectedUser: this.props.self,
+      selectedUser: '',
       searchFilter: ''
     }
   },
   handleSearchMarker: function(name) {
-    if(name == this.props.self.name){
-      this.setState({selectedUser: this.props.self});
-      this.props.filterMarker(name);
+    if(name == this.data.self.profile.name){
+      this.setState({selectedUser: this.data.self});
     } else {
       var userList = this.data.userList
       var userResult = userList.filter(function(user) {
-        return user.name == name;
+        return user.profile.name == name;
       });
       this.setState({selectedUser: userResult[0]});
     }
@@ -109,14 +101,25 @@ UIApp = React.createClass({
     }
     this.setState({sorted: newSort});
   },
+  logout(){
+    var profile = Meteor.user().profile
+    profile.status = "Offline";
+    profile.loginFrom = '';
+    Meteor.users.update(Meteor.userId(), {$set: {profile: profile}})
+    Meteor.logout(function(){
+      Meteor.clearInterval(this.watchId)
+      return FlowRouter.go('/login');
+      // window.alert("Logout")
+    });
+  },
   componentWillReceiveProps(nextProps, nextState) {
-    var userList = this.data.userList
-    if(nextProps.marker != this.state.selectedUser.name){
+    if(this.state.selectedUser == '' || nextProps.marker != this.state.selectedUser.profile.name){
       this.handleSearchMarker(nextProps.marker);
     }
   },
   render() {
-    var d = new Date();
+    var monthsName = ["January", "February", "March", "April", "May", "June", "July",
+    "August", "September", "October", "November", "December"]
     var actions = [
       <FlatButton
         label="Cancel"
@@ -132,86 +135,98 @@ UIApp = React.createClass({
     ]
 
     var trailsItem = []
-    var user = this.state.selectedUser
-    var trails = user.trails
+    var user = (this.state.selectedUser != '' ? this.state.selectedUser : this.data.self)
+    var trails = user.profile.trails
 
     for(var i in trails){
+      let startTime = new Date(trails[i].startTime);
+      let endTime = new Date(trails[i].endTime);
+      let durations = (endTime - startTime) / 1000;
+      let sec = parseInt(durations % 60);
+      let min = parseInt(durations / 60);
+      let hour = parseInt(durations / 3600);
+      let hourText = (hour > 0 ? hour+'h ' : '');
+      let minText = (min > 0 ? min+'m ' : '');
+      let secText = (sec > 0 ? sec+'s' : '');
+      let durationContent = hourText + minText + secText;
+      let recordTime = startTime.getDate() + ' ' + monthsName[startTime.getMonth()] + ' ' + startTime.getFullYear()
       trailsItem.push(<ListItem
-        key={i+1}
+        linkButton={true}
+        target='_blank'
+        href={trails[i].url}
+        key={trails[i].id}
         primaryText={trails[i].name}
         secondaryTextLines={2}
         secondaryText={
           <p>
             <span>
-              Distances: {trails[i].distances} km | Calories: {trails[i].calories} kcal
+              Distances: {parseInt(trails[i].distances) || 0} m | Durations: {durationContent}
             </span>
             <br/>
-            {trails[i].time}
+            Recorded on: {(trails[i].startTime ? recordTime : '')}
           </p>
         }/>)
     }
 
+    var lastSeen = new Date(user.profile.lastSeen)
+    var secondaryText = (user.profile.status != 'Offline' ?
+      <p>{user.profile.loginFrom}</p> : lastSeen.toString())
+    var loginFromIcon = (user.profile.loginFrom == 'Computer'? 'computer' :
+      (user.profile.loginFrom == 'Mobile' ? 'smartphone' : (user.profile.loginFrom == 'Smartwatch' ? 'watch' : '')));
+    var rightIcon = (user.profile.status != 'Offline' ?
+      <FontIcon className="material-icons">{loginFromIcon}</FontIcon> : '')
     var profileItem = [
       <ListItem
         key={1}
         disabled={true}
         innerDivStyle={{paddingBottom:'0px'}}
-        primaryText={(user.status != 'Offline' ?
+        primaryText={(user.profile.status != 'Offline' ?
           "Login From" : "Last Seen")}
-        secondaryText={(user.status != 'Offline' ?
-          user.loginFrom : d.toString())}
+        secondaryText={secondaryText}
+        rightIcon={rightIcon}
         />,
       <ListItem
         key={2}
         disabled={true}
-        primaryText={(user.status != 'Offline' ?
+        primaryText={(user.profile.status != 'Offline' ?
           "Current Location" : "Last Location")}
         secondaryTextLines={2}
         secondaryText={
           <p>
-            <span>{user.lastLocation}</span><br/>
-            {user.lastPosition.lat}, {user.lastPosition.lng}
+            <span>{user.profile.lastLocation}</span><br/>
+            Lat: {user.profile.lastPosition.lat}, Lng: {user.profile.lastPosition.lng}
           </p>
         }
         />
     ]
+    var avatar = (this.data.self.profile.avatar ? <Avatar src={this.data.self.profile.avatar}/> :
+      <Avatar backgroundColor={colors.red500}>{this.data.self.profile.name.charAt(0)}</Avatar>)
 
     return <div>
       <AppBar
         title="Home"
         zDepth={2}
-        onLeftIconButtonTouchTap={this.handleToggle}
       />
-      <LeftNav
-        docked={false}
-        width={200}
-        open={this.state.open}
-        onRequestChange={open => this.setState({open})}>
-        <List valueLink={{value: this.state.selectedIndex, requestChange: this.handleUpdateSelectedIndex}} value={1}>
-          <ListItem value={1} primaryText="Home" leftIcon={<FontIcon className="material-icons">home</FontIcon>}/>
-          <ListItem value={2} primaryText="Record" leftIcon={<FontIcon className="material-icons">fiber_smart_record</FontIcon>} onTouchTap={this.handleClose} />
-        </List>
-      </LeftNav>
       <Card style={{position:'fixed', right:0, top:'64px', width:'25%', height:'100%', minHeight:'100%'}} id="card">
-        <div style={{height: '40%'}}>
+        <div style={{height: '46.5%'}}> {/*{{height: '40%'}}*/}
           <List valueLink={{value: this.state.selectedIndex, requestChange: this.handleUpdateSelectedIndex}}>
             <ListItem
-              onTouchTap={this.handleSelfClicked.bind(this, this.props.self.name )}
-              primaryText={"Hi, "+ this.props.self.name +"!"}
-              leftAvatar={<Avatar backgroundColor={colors.red500}>{this.props.self.name.charAt(0)}</Avatar>}
+              onTouchTap={this.handleSelfClicked.bind(this, this.data.self.profile.name )}
+              primaryText={"Hi, "+ this.data.self.profile.name +"!"}
+              leftAvatar={avatar}
               rightIconButton={<IconMenu iconButtonElement={<IconButton iconClassName="material-icons">more_vert</IconButton>}>
-                <MenuItem onTouchTap={this.handleOpenDialog} leftIcon={<FontIcon className="material-icons">person</FontIcon>}>Sign Out</MenuItem>
-                <MenuItem leftIcon={<FontIcon className="material-icons">account_circle</FontIcon>}>Remove Account</MenuItem>
+                <MenuItem linkButton={true} onMouseDown={this.logout} leftIcon={<FontIcon className="material-icons">person</FontIcon>}>Sign Out</MenuItem>
+                <MenuItem onTouchTap={this.handleOpenDialog} leftIcon={<FontIcon className="material-icons">account_circle</FontIcon>}>Remove Account</MenuItem>
               </IconMenu>}/>
           </List>
           <Dialog
             contentStyle={{width:'30%'}}
-            title="Sign Out"
+            title="Remove Account"
             actions={actions}
             modal={false}
             open={this.state.openDialog}
             onRequestClose={this.handleCloseDialog}>
-            Are you sure you want to sign out?
+            Are you sure you want to remove your account?
           </Dialog>
           <Divider style={{height:'2px'}}/>
           <div style={{overflowY:'scroll', height:'calc(100% - 74px)'}}>
@@ -221,14 +236,14 @@ UIApp = React.createClass({
                 disabled={true}
                 innerDivStyle={{paddingBottom:'0px'}}
                 primaryText={
-                  <span style={{fontSize: '24px'}}>{user.name}</span>
+                  <span style={{fontSize: '24px'}}>{user.profile.name}</span>
                 }
                 />
               <ListItem
                 disabled={true}
                 innerDivStyle={{paddingBottom:'0px'}}
                 primaryText="Status"
-                secondaryText={user.status}
+                secondaryText={<p className={"status-"+user.profile.status.toLowerCase()}>{user.profile.status}</p>}
                 />
               {profileItem}
               <Divider inset={true} />
@@ -241,10 +256,10 @@ UIApp = React.createClass({
             </List>
           </div>
         </div>
-        <div style={{height: '60%'}}>
+        <div style={{height: '53.5%'}}> {/*{{height: '60%'}}*/}
           <Divider style={{height:'2px'}}/>
           <Toolbar>
-            <ToolbarGroup style={{width: 'calc(100% - 144px)', display: 'inline-block'}}>
+            <ToolbarGroup style={{width: 'calc(100% - 150px)', display: 'inline-block'}}> {/*{{width: 'calc(100% - 144px)'}}*/}
               <TextField
                 hintText={'Search User'}
                 style={{minWidth: '168px', width: '100%'}}
